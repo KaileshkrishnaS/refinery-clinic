@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REFINERY | Admin Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e3a3a;
+            --bg: #f8faf9;
+            --card: #ffffff;
+            --border: #e2e8f0;
+            --danger: #ef4444;
+            --accent: #c5a059;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); color: #0f172a; padding: 20px; }
+
+        .container { max-width: 1000px; margin: 0 auto; }
+        .logo { font-size: 1.5rem; font-weight: 700; color: var(--primary); letter-spacing: 2px; }
+
+        /* Login Card */
+        .login-card {
+            max-width: 400px; margin: 80px auto; background: var(--card);
+            padding: 32px; border-radius: 16px; border: 1px solid var(--border);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center;
+        }
+        .form-control {
+            width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--border);
+            border-radius: 8px; font-size: 1rem; outline: none;
+        }
+        .btn {
+            background: var(--primary); color: white; border: none; padding: 12px 20px;
+            border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; transition: 0.2s;
+        }
+
+        /* Clinic Selector Header */
+        .clinic-tabs { display: flex; gap: 12px; margin: 24px 0; }
+        .tab {
+            flex: 1; padding: 16px; background: white; border: 1px solid var(--border);
+            border-radius: 12px; text-align: center; font-weight: 700; cursor: pointer; transition: 0.2s;
+        }
+        .tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .stats-summary {
+            display: flex; gap: 16px; margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white; border: 1px solid var(--border); padding: 16px; border-radius: 12px; flex: 1;
+        }
+        .stat-card span { font-size: 0.8rem; color: #64748b; text-transform: uppercase; }
+        .stat-card div { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+
+        /* Date Group */
+        .date-group { margin-bottom: 24px; }
+        .date-header {
+            font-size: 1rem; font-weight: 700; color: var(--accent);
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;
+            border-bottom: 2px solid var(--border); padding-bottom: 6px;
+        }
+
+        /* Booking Card */
+        .booking-card {
+            background: white; border: 1px solid var(--border); border-radius: 12px;
+            padding: 16px 20px; margin-bottom: 12px; display: flex;
+            justify-content: space-between; align-items: center; box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+        }
+        .patient-info h4 { font-size: 1.1rem; color: var(--primary); margin-bottom: 4px; }
+        .patient-info p { font-size: 0.88rem; color: #475569; }
+        .badge { background: #f1f5f9; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }
+
+        .btn-remove {
+            background: #fee2e2; color: var(--danger); border: 1px solid #fca5a5;
+            padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s;
+        }
+        .btn-remove:hover { background: var(--danger); color: white; }
+
+        /* Confirmation Modal */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 200;
+            justify-content: center; align-items: center;
+        }
+        .modal { background: white; padding: 24px; border-radius: 16px; max-width: 400px; width: 90%; text-align: center; }
+        .modal-actions { display: flex; gap: 12px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- LOGIN VIEW -->
+        <div id="loginView" class="login-card">
+            <div class="logo" style="margin-bottom: 12px;">REFINERY ADMIN</div>
+            <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 20px;">Customer Booking Management Portal</p>
+            <form onsubmit="handleAdminLogin(event)">
+                <input type="text" id="adminUser" class="form-control" placeholder="Username" required>
+                <input type="password" id="adminPass" class="form-control" placeholder="Password" required>
+                <button type="submit" class="btn">LOGIN</button>
+            </form>
+            <div id="adminLoginError" style="color: var(--danger); font-size: 0.85rem; margin-top: 10px; display: none;">Invalid username or password.</div>
+        </div>
+
+        <!-- DASHBOARD VIEW -->
+        <div id="adminDashboard" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="logo">REFINERY ADMIN</div>
+                <button onclick="fetchAdminAppointments()" class="btn" style="width: auto; padding: 8px 16px; font-size: 0.85rem;">Refresh Data</button>
+            </div>
+
+            <div class="clinic-tabs">
+                <div class="tab active" onclick="selectClinic('Clinic 1')">CLINIC 1</div>
+                <div class="tab" onclick="selectClinic('Clinic 2')">CLINIC 2</div>
+                <div class="tab" onclick="selectClinic('Clinic 3')">CLINIC 3</div>
+            </div>
+
+            <div class="stats-summary">
+                <div class="stat-card">
+                    <span>Active Clinic</span>
+                    <div id="statClinic">Clinic 1</div>
+                </div>
+                <div class="stat-card">
+                    <span>Total Appointments</span>
+                    <div id="statTotal">0</div>
+                </div>
+            </div>
+
+            <div id="bookingsContainer">
+                <!-- Grouped appointments will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal">
+            <h3 style="margin-bottom: 10px; color: var(--primary);">Confirm Removal</h3>
+            <p style="color: #64748b; font-size: 0.9rem;">Are you sure you want to remove this appointment? This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button onclick="closeModal()" class="btn" style="background: #e2e8f0; color: #334155;">Cancel</button>
+                <button id="confirmDeleteBtn" class="btn" style="background: var(--danger);">Remove</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentClinic = 'Clinic 1';
+        let authToken = '';
+        let targetDeleteId = null;
+
+        async function handleAdminLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('adminUser').value;
+            const p = document.getElementById('adminPass').value;
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, password: p, portal: 'admin' })
+                });
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    authToken = data.token;
+                    document.getElementById('loginView').style.display = 'none';
+                    document.getElementById('adminDashboard').style.display = 'block';
+                    fetchAdminAppointments();
+                } else {
+                    document.getElementById('adminLoginError').style.display = 'block';
+                }
+            } catch (err) {
+                alert('Connection error');
+            }
+        }
+
+        function selectClinic(clinic) {
+            currentClinic = clinic;
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.toggle('active', tab.innerText === clinic.toUpperCase());
+            });
+            document.getElementById('statClinic').innerText = clinic;
+            fetchAdminAppointments();
+        }
+
+        async function fetchAdminAppointments() {
+            try {
+                const res = await fetch(`/api/appointments?clinic=${encodeURIComponent(currentClinic)}`);
+                const data = await res.json();
+                renderAppointments(data);
+            } catch (err) {
+                console.error('Error fetching admin data', err);
+            }
+        }
+
+        function renderAppointments(data) {
+            document.getElementById('statTotal').innerText = data.length;
+            const container = document.getElementById('bookingsContainer');
+            container.innerHTML = '';
+
+            if (data.length === 0) {
+                container.innerHTML = `<div style="text-align: center; padding: 40px; background: white; border-radius: 12px; color: #94a3b8;">No bookings found for ${currentClinic}.</div>`;
+                return;
+            }
+
+            // Group by Date
+            const grouped = {};
+            // Sort ascending by date & time
+            data.sort((a, b) => new Date(a.date + ' ' + a.timeSlot.split(' - ')[0]) - new Date(b.date + ' ' + b.timeSlot.split(' - ')[0]));
+
+            data.forEach(item => {
+                if (!grouped[item.date]) grouped[item.date] = [];
+                grouped[item.date].push(item);
+            });
+
+            for (const [date, items] of Object.entries(grouped)) {
+                const dateGroup = document.createElement('div');
+                dateGroup.className = 'date-group';
+                
+                let html = `<div class="date-header">${formatDateHeader(date)}</div>`;
+                items.forEach(item => {
+                    html += `
+                        <div class="booking-card">
+                            <div class="patient-info">
+                                <h4>${escapeHtml(item.name)} <span class="badge">Age: ${item.age}</span></h4>
+                                <p><strong>Problem:</strong> ${escapeHtml(item.problem)}</p>
+                                <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">
+                                    📍 ${escapeHtml(item.location)} | ⏰ ${item.timeSlot} | ID: ${item.id}
+                                </p>
+                            </div>
+                            <button onclick="promptDelete('${item.id}')" class="btn-remove">REMOVE</button>
+                        </div>
+                    `;
+                });
+
+                dateGroup.innerHTML = html;
+                container.appendChild(dateGroup);
+            }
+        }
+
+        function promptDelete(id) {
+            targetDeleteId = id;
+            document.getElementById('confirmModal').style.display = 'flex';
+            document.getElementById('confirmDeleteBtn').onclick = executeDelete;
+        }
+
+        function closeModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+            targetDeleteId = null;
+        }
+
+        async function executeDelete() {
+            if (!targetDeleteId) return;
+
+            try {
+                const res = await fetch(`/api/appointments/${targetDeleteId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': authToken }
+                });
+
+                if (res.ok) {
+                    closeModal();
+                    fetchAdminAppointments(); // Instant UI sync
+                } else {
+                    alert('Failed to delete appointment.');
+                }
+            } catch (err) {
+                alert('Server error during deletion.');
+            }
+        }
+
+        function formatDateHeader(dateStr) {
+            const options = { day: 'numeric', month: 'LONG', year: 'NUMERIC' };
+            try {
+                return new Date(dateStr).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
+            } catch (e) {
+                return dateStr;
+            }
+        }
+
+        function escapeHtml(text) {
+            return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+    </script>
+</body>
+</html>

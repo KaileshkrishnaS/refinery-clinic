@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REFINERY | Database Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- SheetJS CDN for native Excel generation -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #1e3a3a;
+            --bg: #f4f6f8;
+            --card: #ffffff;
+            --border: #cbd5e1;
+            --accent: #c5a059;
+            --danger: #ef4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); color: #334155; padding: 20px; }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .logo { font-size: 1.5rem; font-weight: 700; color: var(--primary); letter-spacing: 2px; }
+
+        /* Login view */
+        .login-card {
+            max-width: 400px; margin: 80px auto; background: var(--card);
+            padding: 32px; border-radius: 16px; border: 1px solid var(--border);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center;
+        }
+        .login-card h2 { margin-bottom: 20px; color: var(--primary); }
+        .form-control {
+            width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--border);
+            border-radius: 8px; font-size: 1rem; outline: none;
+        }
+        .btn {
+            background: var(--primary); color: white; border: none; padding: 12px 20px;
+            border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; transition: 0.2s;
+        }
+        .btn:hover { opacity: 0.9; }
+
+        /* Dashboard View */
+        .tabs { display: flex; gap: 12px; margin-bottom: 20px; }
+        .tab-btn {
+            flex: 1; padding: 14px; background: #e2e8f0; border: none; border-radius: 8px;
+            font-weight: 700; color: #475569; cursor: pointer; transition: 0.2s;
+        }
+        .tab-btn.active { background: var(--primary); color: white; }
+
+        .table-container {
+            background: var(--card); border-radius: 12px; border: 1px solid var(--border);
+            overflow-x: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.03); max-height: 550px;
+        }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; font-size: 0.9rem; }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); border-right: 1px solid #f1f5f9; }
+        th { background: #f8fafc; font-weight: 700; color: var(--primary); position: sticky; top: 0; z-index: 10; }
+        tr:hover { background-color: #f8fafc; }
+
+        /* Excel-like editable cell */
+        td.editable { cursor: pointer; position: relative; }
+        td.editable:hover::after { content: ' ✏️️'; font-size: 0.75rem; opacity: 0.5; }
+        td input {
+            width: 100%; padding: 6px; border: 2px solid var(--accent);
+            border-radius: 4px; font-size: 0.9rem; outline: none;
+        }
+
+        .action-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+        .btn-export { background: #166534; color: white; width: auto; padding: 10px 20px; }
+        
+        .alert { color: var(--danger); font-size: 0.85rem; margin-top: 10px; display: none; }
+        .save-indicator { background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; float: right; display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- LOGIN VIEW -->
+        <div id="loginView" class="login-card">
+            <div class="logo" style="margin-bottom: 12px;">REFINERY DATABASE</div>
+            <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 20px;">System Authentication</p>
+            <form onsubmit="handleLogin(event)">
+                <input type="text" id="username" class="form-control" placeholder="Username" required>
+                <input type="password" id="password" class="form-control" placeholder="Password" required>
+                <button type="submit" class="btn">LOGIN</button>
+            </form>
+            <div id="loginError" class="alert">Invalid username or password.</div>
+        </div>
+
+        <!-- DASHBOARD VIEW -->
+        <div id="dashboardView" style="display: none;">
+            <div class="header">
+                <div class="logo">REFINERY DATABASE</div>
+                <span id="syncStatus" class="save-indicator">Saved</span>
+            </div>
+
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchClinic('Clinic 1')">CLINIC 1</button>
+                <button class="tab-btn" onclick="switchClinic('Clinic 2')">CLINIC 2</button>
+                <button class="tab-btn" onclick="switchClinic('Clinic 3')">CLINIC 3</button>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Patient Name</th>
+                            <th>Age</th>
+                            <th>Problem</th>
+                            <th>Location</th>
+                            <th>Date</th>
+                            <th>Slot</th>
+                            <th>Created At</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Dynamic spreadsheet rows -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="action-bar">
+                <span style="font-size: 0.85rem; color: #64748b;">Double-click any cell to edit details directly.</span>
+                <button onclick="exportToExcel()" class="btn btn-export">EXPORT AS EXCEL FILE</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentClinic = 'Clinic 1';
+        let authToken = '';
+        let appointmentsData = [];
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, password: p, portal: 'database' })
+                });
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    authToken = data.token;
+                    document.getElementById('loginView').style.display = 'none';
+                    document.getElementById('dashboardView').style.display = 'block';
+                    loadClinicData();
+                } else {
+                    document.getElementById('loginError').style.display = 'block';
+                }
+            } catch (err) {
+                alert('Connection error');
+            }
+        }
+
+        function switchClinic(clinicName) {
+            currentClinic = clinicName;
+            document.querySelectorAll('.tab-btn').forEach((btn) => {
+                btn.classList.toggle('active', btn.innerText === clinicName.toUpperCase());
+            });
+            loadClinicData();
+        }
+
+        async function loadClinicData() {
+            try {
+                const res = await fetch(`/api/appointments?clinic=${encodeURIComponent(currentClinic)}`);
+                appointmentsData = await res.json();
+                renderTable();
+            } catch (err) {
+                console.error('Failed to load appointments:', err);
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            if (appointmentsData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 24px; color: #94a3b8;">No appointments found for ${currentClinic}.</td></tr>`;
+                return;
+            }
+
+            appointmentsData.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight:700;">${item.id}</td>
+                    <td class="editable" ondblclick="makeEditable(this, '${item.id}', 'name')">${escapeHtml(item.name)}</td>
+                    <td class="editable" ondblclick="makeEditable(this, '${item.id}', 'age')">${item.age}</td>
+                    <td class="editable" ondblclick="makeEditable(this, '${item.id}', 'problem')">${escapeHtml(item.problem)}</td>
+                    <td class="editable" ondblclick="makeEditable(this, '${item.id}', 'location')">${escapeHtml(item.location)}</td>
+                    <td class="editable" ondblclick="makeEditable(this, '${item.id}', 'date')">${item.date}</td>
+                    <td class="editable" ondblclick="makeEditable(this, '${item.id}', 'timeSlot')">${item.timeSlot}</td>
+                    <td style="color: #94a3b8; font-size: 0.8rem;">${item.createdAt}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function makeEditable(cell, id, field) {
+            if (cell.querySelector('input')) return; // Already editing
+            const oldValue = cell.innerText;
+            const input = document.createElement('input');
+            input.value = oldValue;
+            cell.innerText = '';
+            cell.appendChild(input);
+            input.focus();
+
+            const save = async () => {
+                const newValue = input.value.trim();
+                if (newValue === '' || newValue === oldValue) {
+                    cell.innerText = oldValue;
+                    return;
+                }
+
+                try {
+                    const updatePayload = {};
+                    updatePayload[field] = field === 'age' ? parseInt(newValue, 10) : newValue;
+
+                    const res = await fetch(`/api/appointments/${id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': authToken
+                        },
+                        body: JSON.stringify(updatePayload)
+                    });
+
+                    if (!res.ok) throw new Error();
+
+                    cell.innerText = newValue;
+                    showSyncIndicator();
+                    loadClinicData(); // Refresh dataset
+                } catch (err) {
+                    alert('Failed to save update.');
+                    cell.innerText = oldValue;
+                }
+            };
+
+            input.addEventListener('blur', save);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') save();
+            });
+        }
+
+        function showSyncIndicator() {
+            const ind = document.getElementById('syncStatus');
+            ind.style.display = 'inline-block';
+            setTimeout(() => { ind.style.display = 'none'; }, 2000);
+        }
+
+        function exportToExcel() {
+            if (appointmentsData.length === 0) {
+                alert('No data available to export.');
+                return;
+            }
+
+            if (typeof XLSX !== 'undefined') {
+                const ws = XLSX.utils.json_to_sheet(appointmentsData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Appointments");
+                XLSX.writeFile(wb, `Refinery_${currentClinic.replace(/\s+/g, '_')}_Appointments.xlsx`);
+            } else {
+                // CSV Fallback
+                let csv = 'ID,Name,Age,Problem,Clinic,Location,Date,Slot,CreatedAt\n';
+                appointmentsData.forEach(r => {
+                    csv += `"${r.id}","${r.name}",${r.age},"${r.problem}","${r.clinic}","${r.location}","${r.date}","${r.timeSlot}","${r.createdAt}"\n`;
+                });
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Refinery_${currentClinic.replace(/\s+/g, '_')}_Appointments.csv`;
+                a.click();
+            }
+        }
+
+        function escapeHtml(text) {
+            return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+    </script>
+</body>
+</html>

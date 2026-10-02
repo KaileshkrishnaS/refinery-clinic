@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>REFINERY | Premier Skincare & Dermatology Clinic</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e3a3a;
+            --primary-light: #2c5252;
+            --accent: #c5a059;
+            --accent-hover: #b08d46;
+            --bg: #f8faf9;
+            --card-bg: #ffffff;
+            --text-dark: #111827;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --error: #ef4444;
+            --success: #10b981;
+            --radius: 16px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg); color: var(--text-dark); line-height: 1.5; padding-bottom: 40px; }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            position: sticky; top: 0; z-index: 100;
+            border-bottom: 1px solid var(--border);
+            padding: 16px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .logo { font-size: 1.4rem; font-weight: 700; letter-spacing: 3px; color: var(--primary); }
+
+        .hero {
+            padding: 40px 20px 30px;
+            text-align: center;
+            background: linear-gradient(180deg, #edf4f2 0%, var(--bg) 100%);
+        }
+        .hero h1 { font-size: 2.1rem; color: var(--primary); font-weight: 700; margin-bottom: 12px; line-height: 1.2; }
+        .hero p { color: var(--text-muted); font-size: 1rem; max-width: 500px; margin: 0 auto 24px; }
+        .btn-cta {
+            display: inline-block; width: 100%; max-width: 320px;
+            background: var(--primary); color: white;
+            padding: 16px 24px; border-radius: 30px; font-weight: 600;
+            text-decoration: none; border: none; cursor: pointer;
+            box-shadow: 0 10px 20px rgba(30, 58, 58, 0.15); transition: 0.2s ease;
+        }
+        .btn-cta:active { transform: scale(0.98); }
+
+        .section { padding: 32px 20px; max-width: 600px; margin: 0 auto; }
+        .section-title { font-size: 1.3rem; color: var(--primary); font-weight: 700; margin-bottom: 20px; text-align: center; }
+
+        .cards-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+        .card {
+            background: var(--card-bg); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+        .card-icon { width: 44px; height: 44px; background: #e8f0ee; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--primary); font-weight: bold; margin-bottom: 12px; }
+        .card h3 { font-size: 1.1rem; margin-bottom: 6px; color: var(--text-dark); }
+        .card p { font-size: 0.9rem; color: var(--text-muted); }
+
+        /* Form Container */
+        .form-container {
+            background: var(--card-bg); border-radius: 20px; padding: 24px;
+            border: 1px solid var(--border); box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            scroll-margin-top: 80px;
+        }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--primary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-control {
+            width: 100%; padding: 14px 16px; border: 1.5px solid var(--border);
+            border-radius: 12px; font-size: 1rem; color: var(--text-dark);
+            background: #fafafa; transition: 0.2s ease; outline: none;
+        }
+        .form-control:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px rgba(30, 58, 58, 0.08); }
+        textarea.form-control { resize: vertical; min-height: 90px; }
+
+        .btn-submit {
+            width: 100%; background: var(--accent); color: white; padding: 16px;
+            border-radius: 12px; font-weight: 700; font-size: 1rem; border: none;
+            cursor: pointer; transition: 0.2s ease; margin-top: 10px;
+        }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* Feedback Modals/Alerts */
+        .toast {
+            display: none; padding: 16px; border-radius: 12px; margin-bottom: 20px;
+            font-size: 0.95rem; font-weight: 500; text-align: center;
+        }
+        .toast.error { background: #fee2e2; color: #991b1b; border: 1px solid #f87171; }
+        .toast.success { background: #d1fae5; color: #065f46; border: 1px solid #34d399; }
+
+        .receipt-card {
+            display: none; background: #f0fdf4; border: 1.5px dashed var(--success);
+            border-radius: var(--radius); padding: 20px; text-align: center; margin-top: 20px;
+        }
+        .receipt-card h3 { color: #065f46; margin-bottom: 12px; }
+        .receipt-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #d1fae5; font-size: 0.9rem; }
+
+        .clinic-img-placeholder {
+            width: 100%; height: 160px; background: #e2e8f0; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            color: #64748b; font-weight: 500; font-size: 0.9rem; margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">REFINERY</div>
+        <a href="#booking" class="btn-cta" style="width: auto; padding: 8px 16px; font-size: 0.85rem;">Book Now</a>
+    </header>
+
+    <section class="hero">
+        <h1>Advanced Dermatology & Aesthetic Care</h1>
+        <p>Personalized skin health solutions crafted by expert dermatologists in state-of-the-art facilities.</p>
+        <a href="#booking" class="btn-cta">BOOK APPOINTMENT</a>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">Clinical Treatments</h2>
+        <div class="cards-grid">
+            <div class="card">
+                <div class="card-icon">01</div>
+                <h3>Acne & Scar Therapy</h3>
+                <p>Targeted medical treatments to eliminate active acne and restore smooth skin texture.</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">02</div>
+                <h3>Laser Rejuvenation</h3>
+                <p>Advanced non-invasive laser technology for collagen stimulation and pigment correction.</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">03</div>
+                <h3>Anti-Aging & Injectables</h3>
+                <p>Wrinkle reduction, dermal fillers, and contouring solutions by certified specialists.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">Our Clinics</h2>
+        <div class="card" style="margin-bottom: 16px;">
+            <div class="clinic-img-placeholder">[ Clinic Facility Image ]</div>
+            <h3>State-Of-The-Art Equipment</h3>
+            <p>Equipped with US-FDA approved technologies across all three clinical locations.</p>
+        </div>
+    </section>
+
+    <section class="section" id="booking">
+        <div class="form-container">
+            <h2 class="section-title" style="margin-bottom: 10px;">Book Your Visit</h2>
+            <p style="text-align: center; color: var(--text-muted); font-size: 0.88rem; margin-bottom: 24px;">Complete the form below to reserve your appointment.</p>
+
+            <div id="toast" class="toast"></div>
+
+            <form id="appointmentForm" onsubmit="handleAppointmentSubmit(event)">
+                <div class="form-group">
+                    <label for="name">Patient Name *</label>
+                    <input type="text" id="name" class="form-control" placeholder="e.g., Rahul Kumar" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="age">Age *</label>
+                    <input type="number" id="age" class="form-control" min="1" max="120" placeholder="e.g., 25" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="problem">Skin Concern / Problem *</label>
+                    <textarea id="problem" class="form-control" placeholder="Describe your skin concern..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="clinic">Select Clinic *</label>
+                    <select id="clinic" class="form-control" required>
+                        <option value="">-- Choose Clinic --</option>
+                        <option value="Clinic 1">Clinic 1</option>
+                        <option value="Clinic 2">Clinic 2</option>
+                        <option value="Clinic 3">Clinic 3</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="location">Location / City *</label>
+                    <input type="text" id="location" class="form-control" placeholder="e.g., Chennai" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="date">Preferred Date *</label>
+                    <input type="date" id="date" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="timeSlot">Time Slot *</label>
+                    <select id="timeSlot" class="form-control" required>
+                        <option value="">-- Select Time Slot --</option>
+                        <option value="09:00 AM - 09:30 AM">09:00 AM - 09:30 AM</option>
+                        <option value="09:30 AM - 10:00 AM">09:30 AM - 10:00 AM</option>
+                        <option value="10:00 AM - 10:30 AM">10:00 AM - 10:30 AM</option>
+                        <option value="10:30 AM - 11:00 AM">10:30 AM - 11:00 AM</option>
+                        <option value="11:00 AM - 11:30 AM">11:00 AM - 11:30 AM</option>
+                        <option value="02:00 PM - 02:30 PM">02:00 PM - 02:30 PM</option>
+                        <option value="03:00 PM - 03:30 PM">03:00 PM - 03:30 PM</option>
+                        <option value="04:00 PM - 04:30 PM">04:00 PM - 04:30 PM</option>
+                    </select>
+                </div>
+
+                <button type="submit" id="submitBtn" class="btn-submit">CONFIRM APPOINTMENT</button>
+            </form>
+
+            <div id="receipt" class="receipt-card">
+                <h3>Appointment Confirmed!</h3>
+                <div class="receipt-row"><span>Appointment ID:</span><strong id="r-id"></strong></div>
+                <div class="receipt-row"><span>Clinic:</span><strong id="r-clinic"></strong></div>
+                <div class="receipt-row"><span>Date:</span><strong id="r-date"></strong></div>
+                <div class="receipt-row"><span>Time:</span><strong id="r-time"></strong></div>
+                <button onclick="resetBookingForm()" class="btn-cta" style="margin-top: 16px; font-size: 0.85rem; padding: 10px;">Book Another</button>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Set minimum booking date to today
+        document.getElementById('date').min = new Date().toISOString().split('T')[0];
+
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.className = `toast ${isError ? 'error' : 'success'}`;
+            toast.innerText = msg;
+            toast.style.display = 'block';
+        }
+
+        async function handleAppointmentSubmit(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            const toast = document.getElementById('toast');
+            toast.style.display = 'none';
+
+            const payload = {
+                name: document.getElementById('name').value.trim(),
+                age: document.getElementById('age').value,
+                problem: document.getElementById('problem').value.trim(),
+                clinic: document.getElementById('clinic').value,
+                location: document.getElementById('location').value.trim(),
+                date: document.getElementById('date').value,
+                timeSlot: document.getElementById('timeSlot').value
+            };
+
+            // Double check validation
+            if (!payload.name || !payload.age || !payload.problem || !payload.clinic || !payload.location || !payload.date || !payload.timeSlot) {
+                showToast('Please fill in all required fields.', true);
+                return;
+            }
+
+            if (payload.age < 1 || payload.age > 120) {
+                showToast('Please enter a valid age between 1 and 120.', true);
+                return;
+            }
+
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerText = 'Processing...';
+
+                const response = await fetch('/api/appointments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) throw new Error(result.error || 'Booking failed');
+
+                // Display Receipt
+                document.getElementById('appointmentForm').style.display = 'none';
+                document.getElementById('r-id').innerText = result.appointment.id;
+                document.getElementById('r-clinic').innerText = result.appointment.clinic;
+                document.getElementById('r-date').innerText = result.appointment.date;
+                document.getElementById('r-time').innerText = result.appointment.timeSlot;
+                document.getElementById('receipt').style.display = 'block';
+
+            } catch (err) {
+                showToast(err.message, true);
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'CONFIRM APPOINTMENT';
+            }
+        }
+
+        function resetBookingForm() {
+            document.getElementById('appointmentForm').reset();
+            document.getElementById('appointmentForm').style.display = 'block';
+            document.getElementById('receipt').style.display = 'none';
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('submitBtn').innerText = 'CONFIRM APPOINTMENT';
+            document.getElementById('toast').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
